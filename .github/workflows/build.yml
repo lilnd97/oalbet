@@ -9,49 +9,61 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 📥 Lấy source code
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ⚙️ Cài Node.js
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
+      # 📦 Cài dependencies gốc của project
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
+      # 🏗 Build web (tạo thư mục dist/)
       - name: Build web
         run: npm run build
 
+      # ⚡ Đảm bảo có Capacitor đúng version
       - name: Ensure Capacitor
-        run: npm install @capacitor/core @capacitor/cli @capacitor/android
+        run: npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5 --legacy-peer-deps
 
+      # 🔍 Debug nhẹ xem structure
       - name: Check project structure
         run: |
           ls -la
           echo "---- dist ----"
           ls -la dist || true
 
+      # 📱 Add Android (nếu chưa có)
       - name: Add Android
         run: npx cap add android
 
+      # 🔄 Sync source vào Android project
       - name: Sync Capacitor
         run: npx cap sync android
 
+      # ☕ Setup Java (cho Gradle)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
 
+      # 🚀 Build APK debug
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      # 📤 Upload file APK ra artifacts
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
