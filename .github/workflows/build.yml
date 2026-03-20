@@ -1,4 +1,4 @@
-name: Build APK (Capacitor)
+name: Build APK (Capacitor React Vite)
 
 on:
   push:
@@ -9,59 +9,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Lấy source code
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      # ⚙️ Cài Node.js
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      # 📦 Cài dependencies gốc của project
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      # 🏗 Build web (tạo thư mục dist/)
-      - name: Build web
+      - name: Build web app (Vite)
         run: npm run build
 
-      # ⚡ Đảm bảo có Capacitor đúng version
-      - name: Ensure Capacitor
-        run: npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5 --legacy-peer-deps
+      - name: Ensure Capacitor Android
+        run: npm install @capacitor/android@8 @capacitor/cli@8 @capacitor/core@8 --legacy-peer-deps
 
-      # 🔍 Debug nhẹ xem structure
-      - name: Check project structure
+      - name: Add/Sync Android Project
         run: |
-          ls -la
-          echo "---- dist ----"
-          ls -la dist || true
+          npx cap add android
+          npx cap sync android
 
-      # 📱 Add Android (nếu chưa có)
-      - name: Add Android
-        run: npx cap add android
-
-      # 🔄 Sync source vào Android project
-      - name: Sync Capacitor
-        run: npx cap sync android
-
-      # ☕ Setup Java (cho Gradle)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
 
-      # 🚀 Build APK debug
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # 📤 Upload file APK ra artifacts
-      - name: Upload APK
+      - name: Upload app-debug.apk
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
