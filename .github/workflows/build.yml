@@ -1,46 +1,67 @@
-name: Build APK
+name: Build APK (Capacitor)
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # 📥 Lấy source code
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ⚙️ Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: "npm"
 
+      # 📦 Cài dependencies
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
+      # 🏗 Build web (ra dist/)
       - name: Build web
         run: npm run build
 
-      - name: Install Capacitor
+      # ⚡ Cài Capacitor CLI (nếu chưa có)
+      - name: Ensure Capacitor
         run: npm install @capacitor/core @capacitor/cli
 
-      - name: Init Capacitor
-        run: npx cap init app com.example.app --web-dir=dist || true
+      # 🔍 Debug nhẹ (giúp bạn nếu lỗi)
+      - name: Check project structure
+        run: |
+          ls -la
+          echo "---- dist ----"
+          ls -la dist || true
 
+      # 📱 Add Android (nếu chưa có)
       - name: Add Android
-        run: npx cap add android || true
+        run: npx cap add android
 
-      - name: Sync
+      # 🔄 Sync code vào Android
+      - name: Sync Capacitor
         run: npx cap sync android
 
+      # ☕ Setup Java (bắt buộc cho Gradle)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      # 🚀 Build APK
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      # 📤 Upload file APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
